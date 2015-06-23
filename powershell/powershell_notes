@@ -17,7 +17,7 @@ Read-Host- Read input form user.
 -eq 
 -lt
 -gt
--ne
+-ne - not equal
 -ge
 -le
 
@@ -230,3 +230,308 @@ Interesting note from note taker: write-host $nicknames, gives a different outpu
 
 To delete a key pair
 $nicknames.Remove("Alexander")
+
+===========================================================
+Chapter 5
+Conditional logic:
+    -If: Statement evaluates a comparison and then executes or skips the execution of statement located in the code block. 
+    -switch: This statement supports the execution of multiple comparison operations. 
+
+Switch statement 
+
+Logical operators. 
+-not
+! - not
+-and 
+-or
+
+String comparison operatiors
+operator    Description                     Case-sensitive
+-ieq        equal to                        No
+-ilt        less then                       No
+-igt        Greater than                    No
+-ige        Greater then or equal To        No
+-ile        Less than or equal to           No
+-ine        not equal                       No
+-ceq        Equal To                        Yes
+-clt        Less than                       Yes
+-cgt        Greater than                    Yes
+-cge        Greater or equal To             Yes
+-cle        less than or equal to           Yes
+-cne        not equal To                    Yes
+
+
+*Note after reading through the above chart the i or the c tell you whether or not it is case sensitive. ieq is not case sensitive and ceq is case sensitive. 
+
+Chapter 6:
+do while- Iterates the delinated code while a specified condition is true
+do until- Iterates the delineated code until a specified condition is true
+for- iterates the delineated code a set number of times. 
+foreach- Iterates through all the elements stored in a colleciton or array. 
+while- Iterates the delineated code as long as, or while, its conditional test remains true. 
+
+do loop- loops as long as or while, the tested condition remains true. Since the condition being evalued is done at the end of the loop, you can count on the loop always executing at least once. 
+Sample code:
+    $i=1
+    do {
+        Write-Host $i
+        $i++
+    } while ($i -le 10)
+
+Do until loop executes until a test condition evaluates to true or in other words, do until loop executes as long as a condition is false. 
+Sample code
+$i = 1
+
+do { 
+Write-Output $i
+$i++
+} until ($i -g 10)
+
+What will happen here is that this code will not run until $i is greater then 10. 
+
+================================================================================================
+For loop through an array:
+$numbers=@(1,2,3,4,5,6,7,8,9,10)
+
+for ($i = 0; $i -le $numbers.Length -1; $i += 2) {
+    Write-output $numbers[$i]
+}
+
+    $numbers.Length -1 --> This is interesting, because this is how the for loop knows when to stop. The array length is 10, but since the counting starts at 0, $i only needs to iterate through numbers 0-9. Once $i = 10, there is no 11th position in the array and that is why the -le condition statement is used. 
+
+================================================================================================
+foreach loop can also process data returned by cmdlets such as Get-Process and Get-ChildItem which return results in the form of a collection. 
+
+foreach ($x in Get-Service)     {
+  if ($x.Status -eq "Running") {Write-Host $x. Name}
+  }
+
+  Foreach loops are more the loop types that I have found in other programming langugage. It will iterate through an array and stop at the end. While the for mentioned above will behave similar to a while loop. 
+================================================================================================
+While loop:
+
+$i = 1
+ while ($i -le 10) {
+ Write-output $i
+ $i++
+ }
+
+Unlike the do while loop mentioned earlier in the notes, this code block will not run at all unless the condition is met. 
+
+================================================================================================
+Two ways to manipulate a for loop:
+
+break command will terminate the loop. eg, 
+for ($i =1; $i -le 10; $i++) {
+    if ($i -eq 5) {
+        break
+    }
+    Write-Host $i
+}
+
+The above code will print the numbers 1,2,3,4
+
+The continue command will terminate the current iteration of the innermost loop, but will continue operating the remainder of the for loop. 
+$i = 1
+
+while ($i -le 10) {
+    if ($i -eq 5) {
+    $i++
+     continue
+    }
+    Write-Host $i 
+    $i++
+}
+
+From trick section:
+Windows Powershell supports the exit command. When executed, this comman terminates the execution of the entire script, not just the current iteration of a loop. 
+if ($x - gt 100) {
+    Write-Host "Error - Maximum value exceeded"
+    exit
+}
+
+    This appears to be similar to sys.exit in python. 
+
+====================================================================
+Functions
+
+Define all your functions in a central loction at the beginning of your powershell script. This ensures that all your functions are defined and initialzed before they are called upon. 
+
+My first function:
+    
+    function hello {
+    Write-Output "Hello world"
+    }
+
+    hello
+
+My first function passing variables:
+    function somethingDifferent ($x, $y) {
+    $z = $x + $y
+    Write-Output $z
+    }
+
+    somethingDifferent 4 5 # Passing the numbers 4 & 5 to the somethingDifferent funciton
+
+Trick- You can pass functions parameters by position or named. In the example above 4 was the $x variable since it was passed first to the function. Another option is to pass the names to the function eg( somethingDifferent -x 4 -y 5)
+
+Another way to pass variables to the function is to use the param arguement
+    function anotherExample {
+    param ($x, $y)
+    $z = $x + $y
+    Write-Output $z
+    }
+
+    This example works the exxact same was as function somethingDifferent worked above. 
+
+#####
+How to specify argument data type
+function Add-Numbers {
+    Param ([int]$x, [int]$y)
+    $z = $x + $y
+    Write-Host $z
+}
+
+Add-Numbers -x 2 -y 3
+
+Now if you pass a non-integer to the function you will get an error in Powershell. 
+
+####
+Other kinds of data types that can be used
+[array]                 [hashtable]
+[boo]                   [int]
+[byte]                  [long]
+[char]                  [single]
+[DateTime]              [string]
+[Decimal]               [xml]
+[double]
+
+
+Assigning default values to arguments:
+
+function Add-Numbers {
+    param ([int]$x=0, [int]$y=0)
+    $z = $x + $y
+    Write-Host $z
+}
+
+Add-Numbers -y 2 --> This will return a value of 2 since we will use the default value for x. 
+
+####
+How to return a result. 
+function Add-Numbers {
+    param ([int]$x=0, [int]$y=0)
+    $result = $x + $y
+    $Result
+}
+
+In this example, the Add-Numbers function takes two integer values passed to it as arguments and adds them. It then returns this result to the statement that called it by assigning the value to be returned to the $resultvaraible, which is then reference against the last statement executed by the function. 
+
+script-level scope variable is a global variable. 
+
+An example:
+    $userName = ""
+    function Get-UserName {
+        $script:userName = Read-Host "What is your name"
+    }
+
+    Get-UserName
+    Write-Host "Hello $userName"
+
+Private varible is a local variable equivalent in Python
+function Get-Username {
+        $private:x = Read-Host "What is your name?"
+    }
+Get-UserName
+write-output "Hello $x"
+
+################################################################################################
+Working with files and folders
+
+To match simple mpatterns, can use the -match operator. 
+
+if ("Once upon a time" -match "ONCE") {
+    Write-Host "Match!"
+}
+
+You can have a case sensitive match by using -cmatch. 
+
+-nomatch argument will be processed when the desired criteria is NOT in the string.  Since XXX is not in the string "Once upon a time", then "we have a match" will print. 
+if ("Once upon a time" -notmatch "XXX") { 
+    Write-Host "We have a match"
+}
+
+####
+Matching alternative patterns
+if ("mar" -match "war|mar|jar") {
+    Write-Host "Match!"
+}
+
+The above lines can also be written as:
+if ("mar" -match "(wa|ma|ja)r") {
+    Write-Host "match!"
+}
+
+#Remember to comment out special characters. FOr example
+if ("the winner of this year's award is Mrs. Ford!" -match "Mr.")
+
+    #Since a period means match a single character in regex, the string above would incorrectly match Mrs. Mrr, Mrs, etc. That is assuming we only want to match Mr. 
+
+    The above line to only match Mr. would be
+    if ("The winner of this year's award is Mr. Ford!" -match Mr\.)
+
+    Regex cheat sheet:
+    [a-z] all lower case letters
+    [A-Z] all upper case letters
+    [0-9] all numbers 0-9
+
+    Character class shortcuts
+    \d - numbers 0-9
+    \w equivalent to [0-9A-Za-z_]
+    \s equivalent to [\t\f\r\n\v]
+    \D Matches any character besides [0-9]
+    \W matches any characters besides [0-9A-za-z]
+    \S Matches any characters besides [\t\f\r\n\v]
+
+Can find out more about regular expressions via Get-Help about_regular_expression
+
+Test-Path- Can be used to see if a file exist
+write-warning- has the same syntax as write-host cmdlet, but when executed, it displays the text string warning: followed by the text. 
+
+
+How to get length of a single file:
+(Get-Item "C:\xerox").length
+
+copy file- copy-item
+Delete file - remove-item
+Rename file - Rename-item
+To read a file- Get-content
+    To grep/search a file - select-string "String to find"
+    example Get-content <filename> | select-string "hello"
+
+Create new file- New-Item c:\newfile -type file
+Create new directory- New-Item C:\folder -type directory
+    * If you want to overwrite the existing file or folder use the -force flag/option
+
+
+Writing text:
+Can use > and >> redirectors
+Set-Content C:\temp\temp.txt "Once upon a time"
+Instead of > can use Out-file cmdlet
+Instead of >> can use add-content cmdlet. 
+
+
+Can modify how the output looks like. 
+Format-List will output in list format. 
+format-table will output in table format. 
+
+Read textfile- get-content
+erase file contents- clear-content
+
+Can natively read and export into csv and xml formats. 
+
+When running get-process you can view the output in the intepreter, or you can open up a window similar to that of tasklist with the command out-gridview. 
+
+Can send data to the printer with the out-printer cmdlet. 
+    Quick printer test --> Get-location | out-printer
+
