@@ -1,0 +1,16 @@
+$pinToStart = "pin to start"
+$pinToTaskBar= "pin to taskbar"
+$file = @((Join-Path -Path $PSHOME -childpath "powershell.exe"),
+(Join-Path -Path $PSHOME -childpath "powershell_ise.exe") )
+foreach($f in $file) {
+    $path=Split-Path $f
+    $shell=New-Object -com "shell.application"
+    $folder=$shell.NameSpace($path)
+    $item=$folder.parsename((Split-Path $f -leaf))
+    $verbs = $item.verbs()
+    foreach($v in $verbs) {
+        if($v.Name.Replace("&","") -match "pinToStart"){$v.DoIt()}}
+    
+    foreach($v in $verbs) {
+        if($v.name.Replace("&","") -match $pinToTaskBar){$v.DoIt()}}
+    }

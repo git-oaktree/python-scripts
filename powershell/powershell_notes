@@ -535,3 +535,29 @@ When running get-process you can view the output in the intepreter, or you can o
 Can send data to the printer with the out-printer cmdlet. 
     Quick printer test --> Get-location | out-printer
 
+#################################################################################################################################################
+Chapter 9
+
+the require statement allows you to require certain system paramters such as administrator, or a paritcular version of PS
+
+You can get information about multiple processes by using a comman between the process name. 
+    Get-Process Explorer, Powershell
+
+To access event logs the syntax is
+    Get-EventLog -list
+
+To read a particular eventlog
+    Get-Eventlog <logname>
+To list the newest four entries
+    Get-EventLog <logname> -newest 4
+
+To get a list of objects that match certain criteria
+    Get-EventLog application | Where-Object {$_.Source -eq "VSSS"}
+
+Using New_Object cmdlet, you can create and instantiate an instance of other .NET classes. Rather then creating PowerShell's Get-Random cmdlet, we can create a new instance using New-Object
+    $randNo=New-Object System.Random
+    $number=$randomNo.Next(1,11)
+
+How to get registry information. This will list all the entries in that folder: 
+    Set-Location hklm:\Software\Microsoft\PowerShell\1\PowerShellEngine
+    Get-ItemProperty . 
