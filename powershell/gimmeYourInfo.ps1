@@ -34,7 +34,7 @@ function search-keys {
 	param (
 	[switch]$Invoke
 	)
-    if (test-path "HKLM:\software\gimme")
+    if (test-path "HKCU:\software\gimme")
 	{
 		$pathToMonitor="Z:/demo"
 	}
