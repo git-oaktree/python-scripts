@@ -4,12 +4,12 @@ function obtain-path() {
     [int]$Source
     )
     
-       
+        $FinalPath=''
         $pathSplit=$path.split("\")
-        $pathToMonitorDriverLetter=$pathSplit[0]
-        $pathOnly= $pathSplit[1 .. $($pathSplit.length -1) ]
+		$pathToMonitorDriverLetter=$pathSplit[0]
+        $pathOnly= $pathSplit[1 .. $($pathSplit.length -2) ]
         foreach($item in $pathOnly) {
-                $FinalPath= '\\' + $item
+                $FinalPath= $FinalPath + '\\' + $item
             }
         $FinalPath = $FinalPath + '\\'    
         if ($source -eq 1) {
@@ -37,7 +37,8 @@ function search-keys {
 	)
     if (test-path "HKCU:\software\gimme")
 	{
-		$pathToMonitor="Z:\demo"
+		#This demo path must have a filename. Othwerwise it will be inconsistent with the MRU entries which do contain a filename. 
+		$pathToMonitor="Z:\demo\filename.txt"
 	}
 	elseif (test-path "HKCU:\software\Microsoft\Office\15.0\Word\User MRU\AD_13F9ED8420D356B73650FCD2B4265E9C3C105D3FA41265D7A8F49750285CB7C2\Place MRU\") 
     {
